@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Despacho.API", "Despacho.API.csproj", "{AAE39A9D-11FB-37AB-0434-0D8609D24577}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AAE39A9D-11FB-37AB-0434-0D8609D24577}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAE39A9D-11FB-37AB-0434-0D8609D24577}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAE39A9D-11FB-37AB-0434-0D8609D24577}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAE39A9D-11FB-37AB-0434-0D8609D24577}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5451C180-2898-46C1-88E7-1BE831E7C0FD}
+	EndGlobalSection
+EndGlobal

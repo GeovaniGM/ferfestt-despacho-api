@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Schema — Sistema de Despacho de Pedidos</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f2; --bg3: #000;
+    --text: #1a1a18; --text2: #5a5a56; --text3: #9a9a94;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --info-bg: #E6F1FB; --info-text: #0C447C;
+    --success-bg: #EAF3DE; --success-text: #27500A;
+    --warn-bg: #FAEEDA; --warn-text: #633806;
+    --purple-bg: #000; --purple-text: #3C3489;
+    --teal-bg: #E1F5EE; --teal-text: #085041;
+    --mono: 'Courier New', monospace;
+    --sans: system-ui, -apple-system, sans-serif;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #e8e6df; --text2: #a8a69f; --text3: #6a6a64;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --info-bg: #042C53; --info-text: #B5D4F4;
+      --success-bg: #173404; --success-text: #C0DD97;
+      --warn-bg: #412402; --warn-text: #FAC775;
+      --purple-bg: #26215C; --purple-text: #CECBF6;
+      --teal-bg: #04342C; --teal-text: #9FE1CB;
+    }
+  }
+  body { font-family: var(--sans); background: var(--bg3); color: var(--text); font-size: 14px; line-height: 1.6; padding: 32px 16px; }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: var(--text2); margin-bottom: 32px; }
+  h2 { font-size: 16px; font-weight: 500; margin: 36px 0 12px; padding-bottom: 6px; border-bottom: 0.5px solid var(--border2); }
+  h3 { font-size: 14px; font-weight: 500; margin: 24px 0 8px; display: flex; align-items: center; gap: 8px; }
+  .table-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .note { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--bg); border-radius: var(--radius); overflow: hidden; border: 0.5px solid var(--border); margin-bottom: 8px; }
+  thead { background: var(--bg2); }
+  th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; padding: 8px 12px; border-bottom: 0.5px solid var(--border2); }
+  td { padding: 8px 12px; border-bottom: 0.5px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--info-text); }
+  td:nth-child(2) { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .tag { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 600; margin-left: 4px; vertical-align: middle; }
+  .pk  { background: var(--warn-bg);    color: var(--warn-text); }
+  .fk  { background: var(--info-bg);    color: var(--info-text); }
+  .uk  { background: var(--purple-bg);  color: var(--purple-text); }
+  .nn  { background: var(--bg3); color: var(--text2); border: 0.5px solid var(--border2); }
+  .idx { background: var(--teal-bg);    color: var(--teal-text); }
+  .constraint-box { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-top: 8px; font-size: 12px; color: var(--text2); }
+  .constraint-box code { font-family: var(--mono); font-size: 12px; color: var(--text); background: var(--bg3); padding: 1px 5px; border-radius: 3px; }
+  pre { font-family: var(--mono); font-size: 12px; background: var(--bg2); border-radius: var(--radius); padding: 14px 16px; overflow-x: auto; color: var(--text); border: 0.5px solid var(--border); white-space: pre; line-height: 1.7; margin: 8px 0; }
+  #erd { margin: 16px 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 24px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Schema do banco de dados</h1>
+  <p class="subtitle">Sistema de Despacho de Pedidos &nbsp;·&nbsp; Versão 1.0 &nbsp;·&nbsp; Março/2026</p>
+
+  <h2>Diagrama de entidades</h2>
+  <div id="erd"></div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="tag pk">PK</span> Chave primária</span>
+    <span class="legend-item"><span class="tag fk">FK</span> Chave estrangeira</span>
+    <span class="legend-item"><span class="tag uk">UK</span> Unique</span>
+    <span class="legend-item"><span class="tag idx">IDX</span> Índice</span>
+    <span class="legend-item"><span class="tag nn">NOT NULL</span> Obrigatório</span>
+  </div>
+
+  <h2>Tabelas</h2>
+
+  <h3>usuarios <span class="table-badge" style="background:var(--purple-bg);color:var(--purple-text)">admin</span></h3>
+  <p class="note">Usuários do backoffice administrativo. Iniciado com um registro fixo. Senha armazenada como hash bcrypt.</p>
+  <table>
+    <thead><tr><th>Coluna</th><th>Tipo</th><th>Atributos</th><th>Descrição</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>UUID</td><td><span class="tag pk">PK</span> <span class="tag nn">NOT NULL</span></td><td>Identificador único</td></tr>
+      <tr><td>email</td><td>VARCHAR(255)</td><td><span class="tag uk">UK</span> <span class="tag nn">NOT NULL</span></td><td>Email de acesso</td></tr>
+      <tr><td>senha_hash</td><td>VARCHAR(255)</td><td><span class="tag nn">NOT NULL</span></td><td>Hash bcrypt da senha</td></tr>
+      <tr><td>ativo</td><td>BOOLEAN</td><td><span class="tag nn">NOT NULL</span> default true</td><td>Conta habilitada</td></tr>
+      <tr><td>criado_em</td><td>TIMESTAMPTZ</td><td><span class="tag nn">NOT NULL</span> default now()</td><td>Data de criação</td></tr>
+    </tbody>
+  </table>
+
+  <h3>bancadas <span class="table-badge" style="background:var(--teal-bg);color:var(--teal-text)">operacional</span></h3>
+  <p class="note">Bancadas de expedição cadastradas no sistema. O código é o valor gravado no código de barras afixado à bancada.</p>
+  <table>
+    <thead><tr><th>Coluna</th><th>Tipo</th><th>Atributos</th><th>Descrição</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>UUID</td><td><span class="tag pk">PK</span> <span class="tag nn">NOT NULL</span></td><td>Identificador único</td></tr>
+      <tr><td>codigo</td><td>VARCHAR(50)</td><td><span class="tag uk">UK</span> <span class="tag nn">NOT NULL</span></td><td>Código lido pelo app (ex: BANCADA-07)</td></tr>
+      <tr><td>descricao</td><td>VARCHAR(255)</td><td><span class="tag nn">NOT NULL</span></td><td>Descrição legível</td></tr>
+      <tr><td>ativo</td><td>BOOLEAN</td><td><span class="tag nn">NOT NULL</span> default true</td><td>Bancada em operação</td></tr>
+      <tr><td>criado_em</td><td>TIMESTAMPTZ</td><td><span class="tag nn">NOT NULL</span> default now()</td><td>Data de criação</td></tr>
+    </tbody>
+  </table>
+
+  <h3>despachos <span class="table-badge" style="background:var(--teal-bg);color:var(--teal-text)">operacional</span></h3>
+  <p class="note">Registros de despacho confirmados. Imutáveis pelo operador. Soft delete pelo admin via campo <code>ativo</code>. A unique constraint em <code>chave_nfe</code> é parcial — aplica-se apenas a registros ativos, permitindo que uma NFe inativada seja despachada novamente.</p>
+  <table>
+    <thead><tr><th>Coluna</th><th>Tipo</th><th>Atributos</th><th>Descrição</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>UUID</td><td><span class="tag pk">PK</span> <span class="tag nn">NOT NULL</span></td><td>Identificador único</td></tr>
+      <tr><td>bancada_id</td><td>UUID</td><td><span class="tag fk">FK</span> <span class="tag nn">NOT NULL</span></td><td>Referência a bancadas.id</td></tr>
+      <tr><td>chave_nfe</td><td>CHAR(44)</td><td><span class="tag uk">UK parcial*</span> <span class="tag nn">NOT NULL</span></td><td>Chave de acesso completa da NFe</td></tr>
+      <tr><td>numero_nfe</td><td>VARCHAR(9)</td><td><span class="tag nn">NOT NULL</span></td><td>Número extraído da chave (posições 26–34)</td></tr>
+      <tr><td>lido_em</td><td>TIMESTAMPTZ</td><td><span class="tag nn">NOT NULL</span></td><td>Timestamp do dispositivo no momento da leitura</td></tr>
+      <tr><td>registrado_em</td><td>TIMESTAMPTZ</td><td><span class="tag nn">NOT NULL</span> default now()</td><td>Timestamp do servidor no momento da persistência</td></tr>
+      <tr><td>ativo</td><td>BOOLEAN</td><td><span class="tag nn">NOT NULL</span> default true <span class="tag idx">IDX</span></td><td>false = inativado pelo admin</td></tr>
+    </tbody>
+  </table>
+  <div class="constraint-box">
+    * Unique constraint parcial: <code>CREATE UNIQUE INDEX uq_despachos_chave_ativa ON despachos (chave_nfe) WHERE ativo = true;</code><br>
+    Garante que não existam dois despachos ativos com a mesma chave, mas permite que uma chave inativada seja despachada novamente.
+  </div>
+
+  <h3>despacho_eventos <span class="table-badge" style="background:var(--info-bg);color:var(--info-text)">auditoria</span></h3>
+  <p class="note">Log unificado de todos os eventos do ciclo de vida de um despacho: tentativas de sincronização (aceitas ou rejeitadas) e inativações pelo admin. <code>despacho_id</code> é nulo para eventos do tipo <code>rejeitado</code>, pois nenhum despacho foi criado.</p>
+  <table>
+    <thead><tr><th>Coluna</th><th>Tipo</th><th>Atributos</th><th>Descrição</th></tr></thead>
+    <tbody>
+      <tr><td>id</td><td>UUID</td><td><span class="tag pk">PK</span> <span class="tag nn">NOT NULL</span></td><td>Identificador único</td></tr>
+      <tr><td>despacho_id</td><td>UUID</td><td><span class="tag fk">FK</span> nullable</td><td>Referência a despachos.id (nulo se rejeitado)</td></tr>
+      <tr><td>bancada_id</td><td>UUID</td><td><span class="tag fk">FK</span> <span class="tag nn">NOT NULL</span></td><td>Referência a bancadas.id</td></tr>
+      <tr><td>chave_nfe</td><td>CHAR(44)</td><td><span class="tag nn">NOT NULL</span> <span class="tag idx">IDX</span></td><td>Chave de acesso (repetida para consulta sem join)</td></tr>
+      <tr><td>tipo</td><td>VARCHAR(20)</td><td><span class="tag nn">NOT NULL</span> <span class="tag idx">IDX</span></td><td>sincronizado | rejeitado | inativado</td></tr>
+      <tr><td>tentativas</td><td>INTEGER</td><td>nullable</td><td>Número de tentativas de envio (sync apenas)</td></tr>
+      <tr><td>enviado_em</td><td>TIMESTAMPTZ</td><td>nullable</td><td>Quando o app enviou a requisição (sync apenas)</td></tr>
+      <tr><td>respondido_em</td><td>TIMESTAMPTZ</td><td>nullable</td><td>Quando o servidor respondeu (sync apenas)</td></tr>
+      <tr><td>erro</td><td>VARCHAR(50)</td><td>nullable</td><td>Código de erro (ex: CHAVE_DUPLICADA) — rejeitado apenas</td></tr>
+      <tr><td>motivo</td><td>TEXT</td><td>nullable</td><td>Motivo da inativação informado pelo admin — inativado apenas</td></tr>
+      <tr><td>criado_em</td><td>TIMESTAMPTZ</td><td><span class="tag nn">NOT NULL</span> default now()</td><td>Timestamp da criação do evento</td></tr>
+    </tbody>
+  </table>
+
+  <h2>SQL de criação</h2>
+  <pre>CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE usuarios (
+  id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  email       VARCHAR(255) NOT NULL UNIQUE,
+  senha_hash  VARCHAR(255) NOT NULL,
+  ativo       BOOLEAN      NOT NULL DEFAULT true,
+  criado_em   TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+CREATE TABLE bancadas (
+  id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  codigo      VARCHAR(50)  NOT NULL UNIQUE,
+  descricao   VARCHAR(255) NOT NULL,
+  ativo       BOOLEAN      NOT NULL DEFAULT true,
+  criado_em   TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+CREATE TABLE despachos (
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  bancada_id     UUID        NOT NULL REFERENCES bancadas(id),
+  chave_nfe      CHAR(44)    NOT NULL,
+  numero_nfe     VARCHAR(9)  NOT NULL,
+  lido_em        TIMESTAMPTZ NOT NULL,
+  registrado_em  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ativo          BOOLEAN     NOT NULL DEFAULT true
+);
+
+CREATE UNIQUE INDEX uq_despachos_chave_ativa
+  ON despachos (chave_nfe)
+  WHERE ativo = true;
+
+CREATE INDEX idx_despachos_bancada_id  ON despachos (bancada_id);
+CREATE INDEX idx_despachos_registrado  ON despachos (registrado_em);
+CREATE INDEX idx_despachos_ativo       ON despachos (ativo);
+
+CREATE TABLE despacho_eventos (
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  despacho_id    UUID        REFERENCES despachos(id),
+  bancada_id     UUID        NOT NULL REFERENCES bancadas(id),
+  chave_nfe      CHAR(44)    NOT NULL,
+  tipo           VARCHAR(20) NOT NULL CHECK (tipo IN ('sincronizado','rejeitado','inativado')),
+  tentativas     INTEGER,
+  enviado_em     TIMESTAMPTZ,
+  respondido_em  TIMESTAMPTZ,
+  erro           VARCHAR(50),
+  motivo         TEXT,
+  criado_em      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_eventos_despacho_id ON despacho_eventos (despacho_id);
+CREATE INDEX idx_eventos_chave_nfe   ON despacho_eventos (chave_nfe);
+CREATE INDEX idx_eventos_tipo        ON despacho_eventos (tipo);
+CREATE INDEX idx_eventos_bancada_id  ON despacho_eventos (bancada_id);</pre>
+
+</div>
+
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false, theme: 'base',
+  fontFamily: 'system-ui, sans-serif',
+  themeVariables: {
+    darkMode: dark, fontSize: '13px',
+    fontFamily: 'system-ui, sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+  },
+});
+const { svg } = await mermaid.render('erd-svg', `erDiagram
+  USUARIOS {
+    uuid id PK 
+    string email UK
+    string senha_hash
+    boolean ativo
+    timestamptz criado_em
+  }
+  BANCADAS {
+    uuid id PK
+    string codigo UK
+    string descricao
+    boolean ativo
+    timestamptz criado_em
+  }
+  DESPACHOS {
+    uuid id PK
+    uuid bancada_id FK
+    char44 chave_nfe "UK parcial (ativo=true)"
+    string numero_nfe
+    timestamptz lido_em
+    timestamptz registrado_em
+    boolean ativo
+  }
+  DESPACHO_EVENTOS {
+    uuid id PK
+    uuid despacho_id FK "nullable"
+    uuid bancada_id FK
+    char44 chave_nfe
+    string tipo
+    int tentativas
+    timestamptz enviado_em
+    timestamptz respondido_em
+    string erro
+    text motivo
+    timestamptz criado_em
+  }
+  BANCADAS ||--o{ DESPACHOS : "realiza"
+  DESPACHOS ||--o{ DESPACHO_EVENTOS : "origina"
+  BANCADAS ||--o{ DESPACHO_EVENTOS : "gera"
+`);
+document.getElementById('erd').innerHTML = svg;
+document.querySelectorAll('#erd svg .node').forEach(node => {
+  const fp = node.querySelector('path[d]');
+  if (!fp) return;
+  const nums = fp.getAttribute('d').match(/-?[\d.]+/g)?.map(Number);
+  if (!nums || nums.length < 8) return;
+  const xs = [nums[0],nums[2],nums[4],nums[6]], ys = [nums[1],nums[3],nums[5],nums[7]];
+  const x = Math.min(...xs), y = Math.min(...ys), w = Math.max(...xs)-x, h = Math.max(...ys)-y;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  rect.setAttribute('x',x); rect.setAttribute('y',y);
+  rect.setAttribute('width',w); rect.setAttribute('height',h); rect.setAttribute('rx','8'); rect.setAttribute('fill', '#000');
+  for (const a of ['stroke','stroke-width','class','style'])
+    if (fp.hasAttribute(a)) rect.setAttribute(a, fp.getAttribute(a));
+  fp.replaceWith(rect);
+});
+document.querySelectorAll('#erd svg .row-rect-odd path, #erd svg .row-rect-even path')
+  .forEach(p => p.setAttribute('stroke','none'));
+</script>
+</body>
+</html>

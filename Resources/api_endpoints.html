@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>API — Sistema de Despacho de Pedidos</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f2; --bg3: #eeecea;
+    --text: #1a1a18; --text2: #5a5a56; --text3: #9a9a94;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --success-bg: #EAF3DE; --success-text: #27500A;
+    --info-bg: #E6F1FB; --info-text: #0C447C;
+    --danger-bg: #FCEBEB; --danger-text: #791F1F;
+    --warn-bg: #FAEEDA; --warn-text: #633806;
+    --purple-bg: #EEEDFE; --purple-text: #3C3489;
+    --radius: 8px; --radius-lg: 12px;
+    --mono: 'Courier New', monospace;
+    --sans: system-ui, -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #e8e6df; --text2: #a8a69f; --text3: #6a6a64;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --success-bg: #173404; --success-text: #C0DD97;
+      --info-bg: #042C53; --info-text: #B5D4F4;
+      --danger-bg: #501313; --danger-text: #F7C1C1;
+      --warn-bg: #412402; --warn-text: #FAC775;
+      --purple-bg: #26215C; --purple-text: #CECBF6;
+    }
+  }
+  body { font-family: var(--sans); background: var(--bg3); color: var(--text); font-size: 14px; line-height: 1.6; padding: 32px 16px; }
+  .container { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: var(--text2); margin-bottom: 32px; }
+  .group-title { font-size: 12px; font-weight: 500; color: var(--text2); margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 0.5px solid var(--border2); text-transform: uppercase; letter-spacing: .05em; }
+  .ep-group { margin-bottom: 6px; }
+  .ep-header { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-radius: var(--radius); cursor: pointer; border: 0.5px solid var(--border); background: var(--bg2); user-select: none; }
+  .ep-header:hover { background: var(--bg3); }
+  .ep-header.open { border-radius: var(--radius) var(--radius) 0 0; }
+  .method { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px; min-width: 50px; text-align: center; font-family: var(--mono); }
+  .m-post   { background: var(--success-bg); color: var(--success-text); }
+  .m-get    { background: var(--info-bg);    color: var(--info-text); }
+  .m-delete { background: var(--danger-bg);  color: var(--danger-text); }
+  .m-patch  { background: var(--warn-bg);    color: var(--warn-text); }
+  .ep-path { font-family: var(--mono); font-size: 13px; }
+  .ep-desc { font-size: 12px; color: var(--text2); margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+  .tag-app   { background: var(--success-bg); color: var(--success-text); }
+  .tag-admin { background: var(--purple-bg);  color: var(--purple-text); }
+  .tag-pub   { background: var(--bg3); color: var(--text2); border: 0.5px solid var(--border2); }
+  .ep-body { display: none; padding: 16px; border: 0.5px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); background: var(--bg); }
+  .ep-body.open { display: block; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; margin: 14px 0 6px; }
+  .section-label:first-child { margin-top: 0; }
+  .note { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+  pre { font-family: var(--mono); font-size: 12px; background: var(--bg2); border-radius: 6px; padding: 12px 14px; overflow-x: auto; color: var(--text); border: 0.5px solid var(--border); white-space: pre; line-height: 1.6; }
+  .auth-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 10px; }
+  .auth-badge { padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .auth-apikey { background: var(--warn-bg); color: var(--warn-text); }
+  .auth-jwt    { background: var(--purple-bg); color: var(--purple-text); }
+  .auth-pub    { background: var(--bg3); color: var(--text2); border: 0.5px solid var(--border2); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; padding: 6px 10px; border-bottom: 0.5px solid var(--border2); }
+  td { padding: 7px 10px; border-bottom: 0.5px solid var(--border); vertical-align: top; }
+  td:first-child { font-family: var(--mono); font-size: 12px; color: var(--info-text); }
+  td:last-child { color: var(--text2); }
+  tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>API — Sistema de Despacho de Pedidos</h1>
+  <p class="subtitle">Base URL: <code>https://api.empresa.com/api/v1</code> &nbsp;·&nbsp; Versão 1.0 &nbsp;·&nbsp; Última atualização: março/2026</p>
+
+  <div class="group-title">Autenticação</div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-post">POST</span>
+      <span class="ep-path">/auth/login</span>
+      <span class="ep-desc"><span class="tag tag-pub">pública</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-pub">Pública</span></div>
+      <p class="note">Autentica o usuário administrador e retorna um token JWT com validade de 8 horas.</p>
+      <div class="section-label">Request body</div>
+      <pre>{
+  "email": "admin@empresa.com",
+  "senha": "senha-segura"
+}</pre>
+      <div class="section-label">Response 200</div>
+      <pre>{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expira_em": "2026-03-31T23:00:00.000Z"
+}</pre>
+      <div class="section-label">Response 401</div>
+      <pre>{
+  "erro": "CREDENCIAIS_INVALIDAS",
+  "mensagem": "Email ou senha incorretos."
+}</pre>
+    </div>
+  </div>
+
+  <div class="group-title">App do operador</div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-get">GET</span>
+      <span class="ep-path">/bancadas/:id</span>
+      <span class="ep-desc">Validar bancada <span class="tag tag-app">app</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-apikey">API Key — X-Api-Key</span></div>
+      <p class="note">Chamado quando o operador lê o código de barras da bancada. Valida se existe e está ativa. O app salva o resultado localmente para uso offline.</p>
+      <div class="section-label">Response 200</div>
+      <pre>{
+  "id": "uuid-da-bancada",
+  "codigo": "BANCADA-07",
+  "descricao": "Bancada expedição leste",
+  "ativo": true
+}</pre>
+      <div class="section-label">Response 404</div>
+      <pre>{
+  "erro": "BANCADA_NAO_ENCONTRADA",
+  "mensagem": "Código de bancada não reconhecido."
+}</pre>
+    </div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-post">POST</span>
+      <span class="ep-path">/despachos</span>
+      <span class="ep-desc">Registrar despacho <span class="tag tag-app">app</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-apikey">API Key — X-Api-Key</span></div>
+      <p class="note">Registra um único despacho. O backend valida o DV da chave de acesso, checa duplicidade e persiste o registro. Um evento é gravado em <code>despacho_eventos</code> independente do resultado.</p>
+      <div class="section-label">Request body</div>
+      <pre>{
+  "chave_nfe": "41260353067994000120550010000901741254185566",
+  "bancada_id": "uuid-da-bancada",
+  "lido_em": "2026-03-31T14:32:10.000Z"
+}</pre>
+      <div class="section-label">Response 201 — criado</div>
+      <pre>{
+  "id": "uuid-do-despacho",
+  "chave_nfe": "41260353067994000120550010000901741254185566",
+  "numero_nfe": "000090174",
+  "bancada_id": "uuid-da-bancada",
+  "lido_em": "2026-03-31T14:32:10.000Z",
+  "registrado_em": "2026-03-31T14:32:11.432Z"
+}</pre>
+      <div class="section-label">Response 409 — duplicidade</div>
+      <pre>{
+  "erro": "CHAVE_DUPLICADA",
+  "mensagem": "Esta NFe já foi despachada.",
+  "despacho_id": "uuid-do-registro-original"
+}</pre>
+      <div class="section-label">Response 422 — dados inválidos</div>
+      <pre>{
+  "erro": "CHAVE_INVALIDA",
+  "mensagem": "Chave de acesso inválida."
+}</pre>
+    </div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-post">POST</span>
+      <span class="ep-path">/despachos/lote</span>
+      <span class="ep-desc">Sincronizar fila offline <span class="tag tag-app">app</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-apikey">API Key — X-Api-Key</span></div>
+      <p class="note">Usado quando o app retorna à conectividade e precisa sincronizar múltiplos registros acumulados. Cada item é processado individualmente — um erro não cancela os demais. Retorna HTTP 207 Multi-Status.</p>
+      <div class="section-label">Request body</div>
+      <pre>{
+  "bancada_id": "uuid-da-bancada",
+  "registros": [
+    {
+      "chave_nfe": "41260353067994000120550010000901741254185566",
+      "lido_em": "2026-03-31T08:10:00.000Z"
+    },
+    {
+      "chave_nfe": "41260353067994000120550010000901741254185567",
+      "lido_em": "2026-03-31T08:12:44.000Z"
+    }
+  ]
+}</pre>
+      <div class="section-label">Response 207 — multi-status</div>
+      <pre>{
+  "resultados": [
+    {
+      "chave_nfe": "41260353067994000120550010000901741254185566",
+      "status": "criado",
+      "despacho_id": "uuid"
+    },
+    {
+      "chave_nfe": "41260353067994000120550010000901741254185567",
+      "status": "rejeitado",
+      "erro": "CHAVE_DUPLICADA"
+    }
+  ]
+}</pre>
+    </div>
+  </div>
+
+  <div class="group-title">Backoffice administrativo</div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-get">GET</span>
+      <span class="ep-path">/despachos</span>
+      <span class="ep-desc">Listar com filtros <span class="tag tag-admin">admin</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-jwt">JWT — Authorization: Bearer</span></div>
+      <div class="section-label">Query params</div>
+      <table>
+        <tr><th>Param</th><th>Tipo</th><th>Descrição</th></tr>
+        <tr><td>bancada_id</td><td>uuid</td><td>Filtrar por bancada (opcional)</td></tr>
+        <tr><td>data_inicio</td><td>date</td><td>Ex: 2026-03-31 (opcional)</td></tr>
+        <tr><td>data_fim</td><td>date</td><td>Ex: 2026-03-31 (opcional)</td></tr>
+        <tr><td>chave_nfe</td><td>string</td><td>Busca parcial (opcional)</td></tr>
+        <tr><td>pagina</td><td>int</td><td>Default: 1</td></tr>
+        <tr><td>por_pagina</td><td>int</td><td>Default: 50, máx: 200</td></tr>
+      </table>
+      <div class="section-label">Response 200</div>
+      <pre>{
+  "total": 312,
+  "pagina": 1,
+  "por_pagina": 50,
+  "dados": [
+    {
+      "id": "uuid",
+      "chave_nfe": "41260353067994000120550010000901741254185566",
+      "numero_nfe": "000090174",
+      "bancada": { "id": "uuid", "codigo": "BANCADA-07" },
+      "lido_em": "2026-03-31T14:32:10.000Z",
+      "registrado_em": "2026-03-31T14:32:11.432Z",
+      "ativo": true
+    }
+  ]
+}</pre>
+    </div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-delete">DELETE</span>
+      <span class="ep-path">/despachos/:id</span>
+      <span class="ep-desc">Soft delete <span class="tag tag-admin">admin</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-jwt">JWT — Authorization: Bearer</span></div>
+      <p class="note">Define <code>ativo = false</code> no despacho e registra um evento do tipo <code>inativado</code> em <code>despacho_eventos</code> com o motivo informado. Libera a chave NFe para novo despacho.</p>
+      <div class="section-label">Request body</div>
+      <pre>{
+  "motivo": "NFe lida incorretamente pelo operador"
+}</pre>
+      <div class="section-label">Response 200</div>
+      <pre>{
+  "id": "uuid",
+  "ativo": false,
+  "evento": {
+    "id": "uuid-do-evento",
+    "tipo": "inativado",
+    "motivo": "NFe lida incorretamente pelo operador",
+    "criado_em": "2026-03-31T15:00:00.000Z"
+  }
+}</pre>
+      <div class="section-label">Response 404</div>
+      <pre>{
+  "erro": "DESPACHO_NAO_ENCONTRADO"
+}</pre>
+    </div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-get">GET</span>
+      <span class="ep-path">/despacho-eventos</span>
+      <span class="ep-desc">Histórico de eventos <span class="tag tag-admin">admin</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-jwt">JWT — Authorization: Bearer</span></div>
+      <p class="note">Unifica o histórico de sincronização e inativações. Cobre tentativas aceitas, rejeitadas e registros inativados pelo admin.</p>
+      <div class="section-label">Query params</div>
+      <table>
+        <tr><th>Param</th><th>Tipo</th><th>Descrição</th></tr>
+        <tr><td>bancada_id</td><td>uuid</td><td>Filtrar por bancada (opcional)</td></tr>
+        <tr><td>tipo</td><td>string</td><td>sincronizado | rejeitado | inativado</td></tr>
+        <tr><td>data_inicio</td><td>date</td><td>Opcional</td></tr>
+        <tr><td>data_fim</td><td>date</td><td>Opcional</td></tr>
+      </table>
+      <div class="section-label">Response 200</div>
+      <pre>{
+  "dados": [
+    {
+      "id": "uuid",
+      "tipo": "rejeitado",
+      "chave_nfe": "41260353067994000120550010000901741254185566",
+      "bancada": { "id": "uuid", "codigo": "BANCADA-07" },
+      "despacho_id": null,
+      "tentativas": 1,
+      "enviado_em": "2026-03-31T14:32:11.000Z",
+      "respondido_em": "2026-03-31T14:32:11.432Z",
+      "erro": "CHAVE_DUPLICADA",
+      "motivo": null
+    },
+    {
+      "id": "uuid",
+      "tipo": "inativado",
+      "chave_nfe": "41260353067994000120550010000901741254185567",
+      "bancada": { "id": "uuid", "codigo": "BANCADA-07" },
+      "despacho_id": "uuid-do-despacho",
+      "tentativas": null,
+      "enviado_em": null,
+      "respondido_em": null,
+      "erro": null,
+      "motivo": "NFe lida incorretamente pelo operador"
+    }
+  ]
+}</pre>
+    </div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-get">GET</span>
+      <span class="ep-path">/bancadas</span>
+      <span class="ep-desc">Listar bancadas <span class="tag tag-admin">admin</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-jwt">JWT — Authorization: Bearer</span></div>
+      <div class="section-label">Response 200</div>
+      <pre>{
+  "dados": [
+    {
+      "id": "uuid",
+      "codigo": "BANCADA-07",
+      "descricao": "Bancada expedição leste",
+      "ativo": true,
+      "criado_em": "2026-01-10T09:00:00.000Z"
+    }
+  ]
+}</pre>
+    </div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-post">POST</span>
+      <span class="ep-path">/bancadas</span>
+      <span class="ep-desc">Criar bancada <span class="tag tag-admin">admin</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-jwt">JWT — Authorization: Bearer</span></div>
+      <div class="section-label">Request body</div>
+      <pre>{
+  "codigo": "BANCADA-08",
+  "descricao": "Bancada expedição norte"
+}</pre>
+      <div class="section-label">Response 201</div>
+      <pre>{
+  "id": "uuid",
+  "codigo": "BANCADA-08",
+  "descricao": "Bancada expedição norte",
+  "ativo": true,
+  "criado_em": "2026-03-31T09:00:00.000Z"
+}</pre>
+      <div class="section-label">Response 409 — código duplicado</div>
+      <pre>{
+  "erro": "CODIGO_DUPLICADO",
+  "mensagem": "Já existe uma bancada com este código."
+}</pre>
+    </div>
+  </div>
+
+  <div class="ep-group">
+    <div class="ep-header" onclick="toggle(this)">
+      <span class="method m-patch">PATCH</span>
+      <span class="ep-path">/bancadas/:id</span>
+      <span class="ep-desc">Atualizar bancada <span class="tag tag-admin">admin</span></span>
+    </div>
+    <div class="ep-body">
+      <div class="auth-row">Autenticação: <span class="auth-badge auth-jwt">JWT — Authorization: Bearer</span></div>
+      <p class="note">Todos os campos são opcionais. Enviar apenas o que deve ser alterado.</p>
+      <div class="section-label">Request body</div>
+      <pre>{
+  "descricao": "Bancada expedição norte — turno A",
+  "ativo": false
+}</pre>
+      <div class="section-label">Response 200</div>
+      <pre>{
+  "id": "uuid",
+  "codigo": "BANCADA-08",
+  "descricao": "Bancada expedição norte — turno A",
+  "ativo": false
+}</pre>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  header.classList.toggle('open', !isOpen);
+  body.classList.toggle('open', !isOpen);
+}
+</script>
+</body>
+</html>
